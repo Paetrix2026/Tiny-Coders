@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Patient": {
+      "title": "Patient",
+      "description": "Patient health record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "age": { "type": "number" },
+        "glucose": { "type": "number" },
+        "bloodPressure": { "type": "number" },
+        "bmi": { "type": "number" },
+        "insulin": { "type": "number" },
+        "riskLevel": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "riskScore": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "age", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["patient", "doctor"] },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Telehealth appointment",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["patientId", "date", "time", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profile data"
+    },
+    "/patients/{patientId}": {
+      "schema": "Patient",
+      "description": "Health records for patients"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Booking data"
+    }
+  }
+}
