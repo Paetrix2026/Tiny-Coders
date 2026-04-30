@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [predictLoading, setPredictLoading] = useState(false);
   const [predictResult, setPredictResult] = useState<any>(null);
   const [predictError, setPredictError] = useState('');
-  const [saveLoading, setSaveLoading] = useState(false);
+  const [patientRecords, setPatientRecords] = useState<any[]>([]);
 
   // Telehealth States
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -65,12 +65,20 @@ export default function Dashboard() {
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       const { data: patientData } = await supabase.from('patients').select('*').eq('patient_id', user.id).single();
       const { data: recordData } = await supabase.from('records').select('*').eq('patient_id', user.id).order('id', { ascending: false });
-      const { data: doctorData } = await supabase.from('doctors').select('*, profile:profiles(name)');
+      const { data: pRecordData } = await supabase.from('patient_records').select('*').eq('patient_id', user.id).order('created_at', { ascending: false }).limit(5);
+      
+      // Initialize dummy doctors
+      const dummyDoctors = [
+        { id: 'aditi', user_id: 'aditi', profile: { name: 'Aditi' }, specialization: 'Endocrinologist', status: 'Online' },
+        { id: 'rohan', user_id: 'rohan', profile: { name: 'Rohan' }, specialization: 'General Physician', status: 'Online' },
+        { id: 'ai', user_id: 'ai', profile: { name: 'AI Assistant' }, specialization: 'Lab Interpreter', status: 'Online' }
+      ];
 
       setProfile(profileData);
       setPatient(patientData);
       setRecords(recordData || []);
-      setDoctors(doctorData || []);
+      setPatientRecords(pRecordData || []);
+      setDoctors(dummyDoctors);
 
       if (patientData) {
         setFbs(String(patientData.glucose || ''));
@@ -109,7 +117,7 @@ export default function Dashboard() {
         age: parseFloat(ageInput) || 0
       };
 
-      const res = await fetch('https://twig-yapping-statute.ngrok-free.dev/predict', {
+      const res = await fetch('https://ngrok-free.dev', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -130,15 +138,31 @@ export default function Dashboard() {
 
       setPredictResult(data);
 
-      // Auto-save to history
+      // Patient Records Integration
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('records').insert({
+        await supabase.from('patient_records').insert({
           patient_id: user.id,
-          glucose: payload.fbs,
-          bp: data.status
+          hba1c: payload.hba1c,
+          fbs: payload.fbs,
+          bmi: payload.bmi,
+          cholesterol: payload.cholesterol,
+          age: payload.age,
+          status: data.status,
+          risk_probability: data.risk_probability || 0
         });
-        fetchInitialData(); // Refresh the history/records tab
+
+        // Smart Linking: High Risk Alert
+        if (data.status === 'high') {
+          await supabase.from('records').insert({
+            patient_id: user.id,
+            doctor_id: 'aditi',
+            glucose: 0,
+            bp: `MSG: System Alert: High-risk prediction detected for ${profile?.name || 'Patient'}. Requesting Dr. Aditi for a review.`
+          });
+        }
+        
+        fetchInitialData(); 
       }
     } catch (err: any) {
       console.error('Prediction Error:', err);
@@ -458,6 +482,29 @@ export default function Dashboard() {
                     <p className="text-xs font-bold text-[#A3A3A2]">Complete form to view analysis.</p>
                   </div>
                 )}
+
+                {/* Records Gallery: Recent History */}
+                <div className="bg-white p-6 rounded-[10px] border border-[#E5E5E4]">
+                  <h3 className="text-xs font-bold text-[#A3A3A2] uppercase tracking-wider mb-4">Recent History (Real-time)</h3>
+                  <div className="space-y-3">
+                    {patientRecords.map((pr: any) => (
+                      <div key={pr.id} className="flex items-center justify-between p-3 bg-[#FAFAF9] rounded-lg border border-[#E5E5E4]">
+                        <div>
+                          <p className="text-[13px] font-bold capitalize">{pr.status} Risk</p>
+                          <p className="text-[10px] text-[#A3A3A2]">Prob: {Math.round((pr.risk_probability || 0) * 100)}% • Age: {pr.age}</p>
+                        </div>
+                        <div className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                          pr.status === 'high' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                        }`}>
+                          {pr.status}
+                        </div>
+                      </div>
+                    ))}
+                    {patientRecords.length === 0 && (
+                      <p className="text-xs text-[#A3A3A2] italic text-center py-4">No recent records found.</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
