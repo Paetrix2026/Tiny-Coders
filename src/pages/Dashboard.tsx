@@ -18,7 +18,8 @@ import {
   Loader2,
   AlertCircle,
   Download,
-  MoreHorizontal
+  MoreHorizontal,
+  Zap
 } from 'lucide-react';
 
 export default function Dashboard() {
