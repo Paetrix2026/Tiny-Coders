@@ -9,7 +9,11 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
+<<<<<<< HEAD
   const PORT = 3000;
+=======
+  const PORT = 3001;
+>>>>>>> 9829742 (done)
 
   app.use(cors());
   app.use(express.json());

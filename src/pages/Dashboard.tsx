@@ -117,7 +117,11 @@ export default function Dashboard() {
         age: parseFloat(ageInput) || 0
       };
 
+<<<<<<< HEAD
       const res = await fetch('https://ngrok-free.dev', {
+=======
+      const res = await fetch('https://twig-yapping-statute.ngrok-free.dev/predict', {
+>>>>>>> 9829742 (done)
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

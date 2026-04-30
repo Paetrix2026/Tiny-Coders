@@ -39,9 +39,18 @@ export default function RiskPredictor() {
     setResult(null);
 
     try {
+<<<<<<< HEAD
       const response = await fetch('http://localhost:5000/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+=======
+      const response = await fetch('https://twig-yapping-statute.ngrok-free.dev/predict', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+>>>>>>> 9829742 (done)
         body: JSON.stringify({ 
           hba1c: Number(hba1c), 
           fbs: Number(fbs), 
