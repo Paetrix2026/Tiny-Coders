@@ -129,6 +129,17 @@ export default function Dashboard() {
       }
 
       setPredictResult(data);
+
+      // Auto-save to history
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('records').insert({
+          patient_id: user.id,
+          glucose: payload.fbs,
+          bp: data.status
+        });
+        fetchInitialData(); // Refresh the history/records tab
+      }
     } catch (err: any) {
       console.error('Prediction Error:', err);
       setPredictError(err.message || 'The prediction service is currently unavailable. Please try again later.');
@@ -137,24 +148,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleSaveResult = async () => {
-    if (!predictResult) return;
-    setSaveLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('records').insert({
-        patient_id: user?.id,
-        glucose: Number(fbs),
-        bp: predictResult.status
-      });
-      fetchInitialData();
-      alert('Result saved to records!');
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSaveLoading(false);
-    }
-  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -450,19 +443,12 @@ export default function Dashboard() {
                        'Please consult a doctor immediately for further clinical screening.'}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-3 mt-2">
-                      <button 
-                        onClick={handleSaveResult}
-                        disabled={saveLoading}
-                        className="bg-white border border-[#E5E5E4] py-2.5 rounded-[10px] font-bold text-xs hover:bg-[#F4F4F3] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        {saveLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Save Result'}
-                      </button>
+                    <div className="grid grid-cols-1 gap-3 mt-2">
                       <button 
                         onClick={() => setActiveTab('chat')}
-                        className="bg-[#0A0A0A] text-white py-2.5 rounded-[10px] font-bold text-xs hover:opacity-90 transition-all"
+                        className="bg-[#0A0A0A] text-white py-2.5 rounded-[10px] font-bold text-xs hover:opacity-90 transition-all text-center"
                       >
-                        Consult Doctor
+                        Consult Specialist
                       </button>
                     </div>
                   </div>
